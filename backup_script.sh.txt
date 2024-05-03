@@ -5,7 +5,9 @@ backup_dir="/var/backups"
  
 # Directory to backup
 source_dir="/var/www/html"
+
  #This edit is from mail branch
+
 # GPG recipient (replace with your GPG key ID or email)
 recipient="sukhijajatin@gmail.com"
  
