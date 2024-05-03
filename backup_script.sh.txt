@@ -1,0 +1,76 @@
+#!/bin/bash
+ 
+# Backup directory
+backup_dir="/var/backups"
+ 
+# Directory to backup
+source_dir="/var/www/html"
+ 
+# GPG recipient (replace with your GPG key ID or email)
+recipient="sukhijajatin@gmail.com"
+ 
+# Email settings
+email_recipient="sukhijajatin@gmail.com"
+email_subject="Backup Status"
+email_message="Backup completed successfully."
+ 
+# Timestamp for backup directory
+timestamp=$(date +"%Y%m%d%H%M%S")
+ 
+# Log file
+log_file="/var/log/backup.log"
+ 
+# Function to log messages
+log_message() {
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    echo "[$timestamp] $1" >> "$log_file"
+}
+ 
+# Function to send email notification
+send_email_notification() {
+    local recipient="$1"
+    local subject="$2"
+    local message="$3"
+    echo "$message" | mailx -s "$subject" "$recipient"
+}
+ 
+# Error handling function
+handle_error() {
+    local error_message="$1"
+    log_message "Error: $error_message"
+    send_email_notification "$email_recipient" "Backup Error" "$error_message"
+    exit 1
+}
+ 
+# Create backup directory with timestamp
+backup_name="backup_$timestamp"
+backup_path="$backup_dir/$backup_name"
+mkdir -p "$backup_path" || handle_error "Failed to create backup directory."
+ 
+# Files and directories to copy
+#copy_files=$(ls $source_dir)
+ 
+# Copy selected files and directories to backup location
+#for item in "${copy_files[@]}"; do
+    cp -r "$source_dir" "$backup_path" || handle_error "Failed to copy $item."
+#done
+ 
+ 
+# Compress backup files into a single archive
+#archive_name="$backup_name.tar.gz"
+tar -czf "$backup_dir/$backup_name.tar.gz"  "$backup_path" 2>/dev/null || handle_error "Failed to create archive."
+ 
+# Encrypt sensitive data within the archive using GPG
+#gpg --output "$backup_dir/$archive_name.gpg" --recipient "$recipient" --encrypt "$backup_dir/$archive_name" || handle_error "Failed to encrypt archive."
+ 
+# Remove unencrypted archive
+rm -r "$backup_path" || handle_error "Failed to remove unencrypted archive."
+ 
+# Retention policy - Delete backups older than 7 days
+find "$backup_dir" -type d -ctime +7 -exec rm -rf {} \;
+ 
+# Log success message
+log_message "Backup completed successfully."
+ 
+# Send email notification
+send_email_notification "$email_recipient" "$email_subject" "$email_message"
